@@ -3,30 +3,32 @@
 {-# LANGUAGE GADTs         #-}
 {-# LANGUAGE LambdaCase    #-}
 {-# LANGUAGE PolyKinds     #-}
-{-# LANGUAGE TypeFamilies  #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE TypeInType    #-}
+
+{-# OPTIONS_GHC -Wall -Werror #-}
+{-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
 
 module Pokemon where
 
-import Data.Kind (Constraint)
+import Data.Void
 import Type.Reflection ((:~:)(..))
 
 data PType = None | Fire | Water | Grass
 
--- If 'a' and 'b' are different - the constraint
--- cannot be solved as the construction '() ~ Int'
--- is pathological.
-type family Different a b :: Constraint where
-  Different a a = () ~ Int
-  Different a b = ()
-
 data Pokemon (a :: PType) (b :: PType) where
-  Poke :: Different a b => Pokemon a b
+  Poke :: (a :~: b -> Void) -> Pokemon a b
 
 charmander :: Pokemon Fire None
-charmander = Poke
+charmander = Poke (\case {})
 
 -- this will fail to compile
+--
+--
+-- Poke1.hs: [-Wincomplete-patterns]
+--     Pattern match(es) are non-exhaustive
+--     In a case alternative: Patterns not matched: Refl
+--   |
+--   | bulbasaur = Poke (\case {})
+--   |        
 -- bulbasaur :: Pokemon Grass Grass
--- bulbasaur = Poke
+-- bulbasaur = Poke (\case {})
